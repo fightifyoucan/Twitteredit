@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>仿推特风格论坛生成器</title>
+    <style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+}
+
+body {
+    background-color: #ffffff;
+    min-height: 100vh;
+    padding: 6px;
+    color: #14171a;
+    font-size: 11px;
+}
+
+.container {
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+.panel {
+    background: white;
+    border-radius: 6px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+    border-top: 2px solid #1da1f2;
+}
+
+.panel-header {
+    background: #f8f9fa;
+    color: #1da1f2;
+    padding: 8px 10px;
+    font-size: 1rem;
+    font-weight: 600;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #eee;
+}
+
+.panel-body {
+    padding: 10px;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.form-group {
+    margin-bottom: 6px;
+}
+
+label {
+    display: block;
+    margin-bottom: 3px;
+    font-weight: 600;
+    color: #2c3e50;
+    font-size: 0.85rem;
+}
+
+input, textarea, select {
+    width: 100%;
+    padding: 6px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    transition: border-color 0.3s;
+}
+
+input:focus, textarea:focus, select:focus {
+    outline: none;
+    border-color: #1da1f2;
+    box-shadow: 0 0 0 2px rgba(29, 161, 242, 0.2);
+}
+
+textarea {
+    min-height: 70px;
+    resize: vertical;
+}
+
+.replies-container {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid #eee;
+}
+
+.replies-container h3 {
+    font-size: 0.95rem;
+    margin-bottom: 6px;
+    color: #2c3e50;
+}
+
+.reply-item {
+    background: #fafafa;
+    padding: 7px;
+    border-radius: 4px;
+    margin-bottom: 7px;
+    font-size: 0.85rem;
+}
+
+.reply-actions {
+    display: flex;
+    gap: 6px;
+    margin-top: 4px;
+}
+
+.btn {
+    padding: 5px 10px;
+    border: none;
+    border-radius: 3px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-primary {
+    background: #1da1f2;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #1a91da;
+    transform: translateY(-1px);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.btn-secondary {
+    background: #ecf0f1;
+    color: #2c3e50;
+}
+
+.btn-secondary:hover {
+    background: #d5dbdb;
+}
+
+.btn-danger {
+    background: #e74c3c;
+    color: white;
+    padding: 4px 8px;
+    font-size: 0.8rem;
+}
+
+.btn-danger:hover {
+    background: #c0392b;
+}
+
+/* 仿推特核心样式 - 预览区域 */
+.forum-preview {
+    background: #ffffff;
+    border-radius: 15px;
+    overflow: hidden;
+    border: 1px solid #e1e8ed;
+    max-width: 600px;
+    margin: 0 auto;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.forum-header {
+    background: #ffffff;
+    padding: 12px 15px;
+    border-bottom: 1px solid #e1e8ed;
+}
+
+.forum-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin-bottom: 3px;
+    color: #14171a;
+}
+
+.forum-section {
+    font-size: 0.85rem;
+    color: #657786;
+}
+
+.post-container {
+    padding: 15px;
+    border-bottom: 10px solid #f5f8fa;
+}
+
+.post-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 10px;
+}
+
+.post-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background-color: #1da1f2;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 700;
+    font-size: 1rem;
+}
+
+.post-header-content {
+    flex: 1;
+}
+
+.post-author-info {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 2px;
+}
+
+.post-author {
+    font-weight: 700;
+    color: #14171a;
+    font-size: 0.95rem;
+}
+
+.post-author-username {
+    color: #657786;
+    font-size: 0.85rem;
+}
+
+.post-time {
+    color: #657786;
+    font-size: 0.85rem;
+}
+
+.post-title {
+    font-size: 1.1rem;
+    color: #14171a;
+    font-weight: 700;
+    margin-bottom: 8px;
+    line-height: 1.4;
+}
+
+.post-content {
+    line-height: 1.5;
+    margin-bottom: 12px;
+    padding: 0;
+    background: transparent;
+    font-size: 0.95rem;
+    color: #14171a;
+}
+
+.post-actions {
+    display: flex;
+    justify-content: space-between;
+    max-width: 450px;
+    margin-top: 15px;
+}
+
+.action-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #657786;
+    background: transparent;
+    border: none;
+    font-size: 0.85rem;
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 50px;
+    transition: all 0.2s;
+}
+
+.action-btn:hover {
+    background-color: rgba(29, 161, 242, 0.1);
+    color: #1da1f2;
+}
+
+.replies-section {
+    padding: 0 15px 15px;
+}
+
+.replies-title {
+    font-size: 1rem;
+    margin-bottom: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid #e1e8ed;
+    color: #14171a;
+    font-weight: 700;
+}
+
+/* 回帖容器 - 用于实现连线效果 */
+.replies-thread {
+    position: relative;
+    padding-left: 5px; /* 为连线留出空间 */
+}
+
+/* 回帖项 - 包含头像和连线 */
+.reply-preview {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 15px;
+    padding: 0;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    border-top: none;
+    align-items: flex-start;
+    width: 100%;
+    position: relative;
+}
+
+/* 头像容器 - 包含头像和连线 */
+.reply-avatar-container {
+    position: relative;
+}
+
+.reply-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: #e1e8ed;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #657786;
+    font-size: 0.8rem;
+    position: relative;
+    z-index: 2; /* 确保头像在连线上方 */
+    background-clip: padding-box;
+    border: 2px solid #ffffff; /* 白色边框，与背景色一致，增强连线效果 */
+}
+
+/* 回帖间的竖向连线 - 推特风格 */
+.reply-avatar-container::after {
+    content: '';
+    position: absolute;
+    top: 40px; /* 从头像底部开始 */
+    left: 20px; /* 居中对齐头像 */
+    transform: translateX(-50%);
+    width: 2px;
+    height: calc(100% + 15px); /* 延伸到下一个头像 */
+    background-color: #e1e8ed; /* 与边框同色 */
+    z-index: 1; /* 确保连线在头像下方 */
+}
+
+/* 最后一个回帖不显示连线 */
+.reply-preview:last-child .reply-avatar-container::after {
+    display: none;
+}
+
+.reply-details {
+    flex: 1;
+    max-width: 100%;
+}
+
+.reply-preview-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 4px;
+}
+
+.reply-preview-author {
+    font-weight: 700;
+    color: #14171a;
+    font-size: 0.9rem;
+}
+
+.reply-preview-username {
+    color: #657786;
+    font-size: 0.8rem;
+}
+
+.author-tag {
+    background: #1da1f2;
+    color: white;
+    padding: 1px 4px;
+    border-radius: 3px;
+    font-size: 0.7rem;
+    margin-left: 4px;
+    vertical-align: middle;
+    font-weight: normal;
+}
+
+.reply-preview-time {
+    color: #657786;
+    font-size: 0.8rem;
+    margin-left: auto;
+}
+
+.reply-preview-content {
+    margin-bottom: 8px;
+    color: #14171a;
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+.reply-actions-preview {
+    display: flex;
+    gap: 15px;
+}
+
+.reply-action-btn {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: #657786;
+    background: transparent;
+    border: none;
+    font-size: 0.8rem;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 50px;
+    transition: all 0.2s;
+}
+
+.reply-action-btn:hover {
+    background-color: rgba(29, 161, 242, 0.1);
+    color: #1da1f2;
+}
+
+.icon-reply::before { content: "↩️"; }
+.icon-retweet::before { content: "🔄"; }
+.icon-like::before { content: "❤️"; }
+.icon-share::before { content: "📤"; }
+
+.hidden {
+    display: none;
+}
+
+.form-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 6px;
+    flex-wrap: wrap;
+}
+
+.form-row .form-group {
+    flex: 1;
+    min-width: 100px;
+}
+
+@media (max-width: 768px) {
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .forum-preview {
+        max-width: 100%;
+        border-radius: 0;
+        border-left: none;
+        border-right: none;
+    }
+}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="app-container">
+            <!-- 编辑面板 -->
+            <div class="panel" id="editPanel">
+                <div class="panel-header">
+                    <span>编辑模式</span>
+                    <button class="btn btn-primary" id="previewBtn">预览论坛</button>
+                </div>
+                <div class="panel-body">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="forumName">论坛名称</label>
+                            <input type="text" id="forumName" placeholder="例如：春日论坛">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="sectionName">专区名称</label>
+                            <input type="text" id="sectionName" placeholder="例如：》》情感专区">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="postTitle">主贴标题</label>
+                            <input type="text" id="postTitle" placeholder="请输入主贴标题">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="postAuthor">发帖人</label>
+                            <input type="text" id="postAuthor" placeholder="请输入发帖人昵称">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="postTime">发帖时间</label>
+                            <input type="text" id="postTime" placeholder="例如：2025-11-04 10:30">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="viewCount">浏览量</label>
+                            <input type="number" id="viewCount" min="0">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="likeCount">点赞量</label>
+                            <input type="number" id="likeCount" min="0">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="postContent">主贴内容</label>
+                        <textarea id="postContent" placeholder="请输入主贴内容..."></textarea>
+                    </div>
+                    
+                    <div class="replies-container">
+                        <h3>回帖列表</h3>
+                        <div id="repliesList">
+                            <!-- 回帖将通过JavaScript动态添加 -->
+                        </div>
+                        <button class="btn btn-secondary" id="addReplyBtn">+ 添加回帖</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 预览面板（仿推特样式） -->
+            <div class="panel hidden" id="previewPanel">
+                <div class="panel-header">
+                    <span>预览模式</span>
+                    <button class="btn btn-secondary" id="editBtn">返回编辑</button>
+                </div>
+                <div class="panel-body">
+                    <div class="forum-preview">
+                        <div class="forum-header">
+                            <div class="forum-title" id="previewForumName">春日论坛</div>
+                            <div class="forum-section" id="previewSectionName">》》情感专区</div>
+                        </div>
+                        
+                        <div class="post-container">
+                            <div class="post-header">
+                                <div class="post-avatar">
+                                    <span id="postAvatarInitial">L</span>
+                                </div>
+                                <div class="post-header-content">
+                                    <div class="post-author-info">
+                                        <span class="post-author" id="previewPostAuthor">楼主</span>
+                                        <span class="post-author-username"></span>
+                                        <span class="post-time" id="previewPostTime">2025-11-04 10:30</span>
+                                    </div>
+                                    <div class="post-title" id="previewPostTitle"></div>
+                                    <div class="post-content" id="previewPostContent"></div>
+                                    
+                                    <div class="post-actions">
+                                        <button class="action-btn icon-reply">
+                                            <span>回复</span>
+                                        </button>
+                                        <button class="action-btn icon-retweet">
+                                            <span>转发</span>
+                                        </button>
+                                        <button class="action-btn icon-like">
+                                            <span id="previewLikeCount">86</span>
+                                        </button>
+                                        <button class="action-btn icon-share">
+                                            <span>分享</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="replies-section">
+                            <h3 class="replies-title">回帖 (<span id="replyCount">0</span>)</h3>
+                            <!-- 添加了一个包裹容器用于实现连线效果 -->
+                            <div class="replies-thread" id="previewReplies">
+                                <!-- 回帖预览将通过JavaScript动态添加 -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const defaultData = {
+            forumName: "春日论坛",
+            sectionName: "》》情感专区",
+            postTitle: "",
+            postAuthor: "楼主",
+            postTime: "2025-11-04 10:30",
+            viewCount: "1258",
+            likeCount: "86",
+            postContent: "",
+            replies: [
+                {
+                    author: "注册用户",
+                    time: "2025-11-04 11:15",
+                    content: "111",
+                    likes: 24,
+                    isAuthor: false
+                },
+                {
+                    author: "楼主",
+                    time: "2025-11-04 12:30",
+                    content: "22",
+                    likes: 18,
+                    isAuthor: true
+                },
+                {
+                    author: "注册用户",
+                    time: "2025-11-04 13:45",
+                    content: "33",
+                    likes: 5,
+                    isAuthor: false
+                }
+            ]
+        };
+
+        function loadData() {
+            const savedData = localStorage.getItem('forumGeneratorData');
+            if (savedData) return JSON.parse(savedData);
+            return defaultData;
+        }
+
+        function saveData(data) {
+            localStorage.setItem('forumGeneratorData', JSON.stringify(data));
+        }
+
+        let state = loadData();
+
+        const editPanel = document.getElementById('editPanel');
+        const previewPanel = document.getElementById('previewPanel');
+        const previewBtn = document.getElementById('previewBtn');
+        const editBtn = document.getElementById('editBtn');
+        const addReplyBtn = document.getElementById('addReplyBtn');
+        const repliesList = document.getElementById('repliesList');
+        const previewReplies = document.getElementById('previewReplies');
+        const replyCount = document.getElementById('replyCount');
+
+        function updateState(newState) {
+            state = { ...state, ...newState };
+            saveData(state);
+        }
+
+        function renderFormFields() {
+            document.getElementById('forumName').value = state.forumName;
+            document.getElementById('sectionName').value = state.sectionName;
+            document.getElementById('postTitle').value = state.postTitle;
+            document.getElementById('postAuthor').value = state.postAuthor;
+            document.getElementById('postTime').value = state.postTime;
+            document.getElementById('viewCount').value = state.viewCount;
+            document.getElementById('likeCount').value = state.likeCount;
+            document.getElementById('postContent').value = state.postContent;
+            updateAvatarInitial();
+        }
+
+        function updateAvatarInitial() {
+            const author = document.getElementById('postAuthor').value;
+            const initialElement = document.getElementById('postAvatarInitial');
+            initialElement.textContent = author ? author.charAt(0).toUpperCase() : 'L';
+        }
+
+        function renderReplies() {
+            repliesList.innerHTML = '';
+            state.replies.forEach((reply, index) => {
+                const replyElement = document.createElement('div');
+                replyElement.className = 'reply-item';
+                replyElement.innerHTML = `
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>回帖人</label>
+                            <input type="text" class="reply-author-input" value="${reply.author}" data-index="${index}">
+                        </div>
+                        <div class="form-group">
+                            <label>时间</label>
+                            <input type="text" class="reply-time-input" value="${reply.time}" data-index="${index}">
+                        </div>
+                        <div class="form-group">
+                            <label>点赞数</label>
+                            <input type="number" min="0" class="reply-likes-input" value="${reply.likes}" data-index="${index}">
+                        </div>
+                        <div class="form-group">
+                            <label>是否楼主</label>
+                            <select class="reply-isauthor-input" data-index="${index}">
+                                <option value="false" ${!reply.isAuthor ? 'selected' : ''}>否</option>
+                                <option value="true" ${reply.isAuthor ? 'selected' : ''}>是</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>回帖内容</label>
+                        <textarea class="reply-content-input" data-index="${index}">${reply.content}</textarea>
+                    </div>
+                    <div class="reply-actions">
+                        <button class="btn btn-danger" onclick="deleteReply(${index})">删除</button>
+                    </div>
+                `;
+                repliesList.appendChild(replyElement);
+                
+                // 添加事件监听
+                const authorInput = replyElement.querySelector('.reply-author-input');
+                const timeInput = replyElement.querySelector('.reply-time-input');
+                const likesInput = replyElement.querySelector('.reply-likes-input');
+                const isAuthorSelect = replyElement.querySelector('.reply-isauthor-input');
+                const contentInput = replyElement.querySelector('.reply-content-input');
+                
+                authorInput.addEventListener('input', (e) => {
+                    const newReplies = [...state.replies];
+                    newReplies[index].author = e.target.value;
+                    updateState({ replies: newReplies });
+                });
+                
+                timeInput.addEventListener('input', (e) => {
+                    const newReplies = [...state.replies];
+                    newReplies[index].time = e.target.value;
+                    updateState({ replies: newReplies });
+                });
+                
+                likesInput.addEventListener('input', (e) => {
+                    const newReplies = [...state.replies];
+                    newReplies[index].likes = parseInt(e.target.value) || 0;
+                    updateState({ replies: newReplies });
+                });
+                
+                isAuthorSelect.addEventListener('change', (e) => {
+                    const newReplies = [...state.replies];
+                    newReplies[index].isAuthor = e.target.value === 'true';
+                    updateState({ replies: newReplies });
+                });
+                
+                contentInput.addEventListener('input', (e) => {
+                    const newReplies = [...state.replies];
+                    newReplies[index].content = e.target.value;
+                    updateState({ replies: newReplies });
+                });
+            });
+            updateReplyCount();
+        }
+        
+        window.deleteReply = function(index) {
+            const newReplies = [...state.replies];
+            newReplies.splice(index, 1);
+            updateState({ replies: newReplies });
+            renderReplies();
+            renderPreviewReplies();
+        };
+        
+        addReplyBtn.addEventListener('click', () => {
+            const now = new Date();
+            const timeStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+            const newReply = {
+                author: `用户${state.replies.length + 1}`,
+                time: timeStr,
+                content: "这是新添加的回帖内容...",
+                likes: 0,
+                isAuthor: false
+            };
+            const newReplies = [...state.replies, newReply];
+            updateState({ replies: newReplies });
+            renderReplies();
+            renderPreviewReplies();
+        });
+
+        function setupFormFieldListeners() {
+            ['forumName', 'sectionName', 'postTitle', 'postTime', 'viewCount', 'likeCount'].forEach(fieldId => {
+                document.getElementById(fieldId).addEventListener('input', (e) => {
+                    updateState({ [fieldId]: e.target.value });
+                });
+            });
+            
+            document.getElementById('postAuthor').addEventListener('input', (e) => {
+                updateState({ postAuthor: e.target.value });
+                updateAvatarInitial();
+            });
+            
+            document.getElementById('postContent').addEventListener('input', (e) => {
+                updateState({ postContent: e.target.value });
+            });
+        }
+
+        function renderPreviewReplies() {
+            previewReplies.innerHTML = '';
+            state.replies.forEach((reply, index) => {
+                const initial = reply.author.charAt(0).toUpperCase();
+                const authorTag = reply.isAuthor ? '<span class="author-tag">楼主</span>' : '';
+                const el = document.createElement('div');
+                el.className = 'reply-preview';
+                // 添加了头像容器用于实现连线效果
+                el.innerHTML = `
+                    <div class="reply-avatar-container">
+                        <div class="reply-avatar">${initial}</div>
+                    </div>
+                    <div class="reply-details">
+                        <div class="reply-preview-header">
+                            <span class="reply-preview-author">${reply.author}${authorTag}</span>
+                            <!--span class="reply-preview-username">@user${Math.floor(Math.random() * 10000)}</span-->
+                            <span class="reply-preview-time">${reply.time}</span>
+                        </div>
+                        <div class="reply-preview-content">${reply.content}</div>
+                        <div class="reply-actions-preview">
+                            <button class="reply-action-btn icon-reply">回复</button>
+                            <button class="reply-action-btn icon-retweet">转发</button>
+                            <button class="reply-action-btn icon-like">${reply.likes}</button>
+                        </div>
+                    </div>
+                `;
+                previewReplies.appendChild(el);
+            });
+            updateReplyCount();
+        }
+        
+        function updateReplyCount() {
+            replyCount.textContent = state.replies.length;
+        }
+        
+        // 预览切换功能
+        previewBtn.addEventListener('click', () => {
+            document.getElementById('previewForumName').textContent = state.forumName;
+            document.getElementById('previewSectionName').textContent = state.sectionName;
+            document.getElementById('previewPostTitle').textContent = state.postTitle;
+            document.getElementById('previewPostAuthor').textContent = state.postAuthor;
+            document.getElementById('previewPostTime').textContent = state.postTime;
+            document.getElementById('previewLikeCount').textContent = state.likeCount;
+            document.getElementById('previewPostContent').textContent = state.postContent;
+            renderPreviewReplies();
+            
+            // 切换显示状态
+            editPanel.classList.add('hidden');
+            previewPanel.classList.remove('hidden');
+        });
+        
+        editBtn.addEventListener('click', () => {
+            previewPanel.classList.add('hidden');
+            editPanel.classList.remove('hidden');
+        });
+        
+        // 初始化
+        renderFormFields();
+        setupFormFieldListeners();
+        renderReplies();
+        renderPreviewReplies();
+    </script>
+</body>
+</html>
